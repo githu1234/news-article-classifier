@@ -1,23 +1,28 @@
 """Streamlit app for classifying news articles with Naive Bayes."""
 from __future__ import annotations
 import pickle
+from pathlib import Path
 import pandas as pd
 import streamlit as st
 from train_model import DATA_PATH, MODEL_PATH, train_and_save_model
+
+APP_DIR = Path(__file__).resolve().parent
+PUBLIC_MODEL_PATH = APP_DIR / "news_classifier.pkl"
 
 st.set_page_config(page_title="NewsDesk | Article Classifier", page_icon="🗞️",
                    layout="wide", initial_sidebar_state="expanded")
 
 @st.cache_resource(show_spinner=False)
 def load_artifact() -> dict:
-    """Load the local pickle, training once when it is missing or stale."""
-    needs_training = not MODEL_PATH.exists()
-    if DATA_PATH.exists() and MODEL_PATH.exists():
-        needs_training = DATA_PATH.stat().st_mtime > MODEL_PATH.stat().st_mtime
+    """Load a saved pickle or train once if it is missing or stale."""
+    model_path = next((path for path in (MODEL_PATH, PUBLIC_MODEL_PATH) if path.exists()), None)
+    needs_training = model_path is None
+    if DATA_PATH.exists() and model_path is not None:
+        needs_training = DATA_PATH.stat().st_mtime > model_path.stat().st_mtime
     if needs_training:
         return train_and_save_model()
     try:
-        with MODEL_PATH.open("rb") as file:
+        with model_path.open("rb") as file:
             artifact = pickle.load(file)
         if not isinstance(artifact, dict) or "model" not in artifact:
             raise ValueError("The saved model file has an unexpected format.")
@@ -122,4 +127,4 @@ if classify:
         st.markdown("#### Scores by category")
         st.bar_chart(scores.set_index("Category")[["Confidence"]])
 
-st.caption("Training corpus: the BBC text classification CSV included with this app.")
+st.caption("Training corpus: BBC text classification data; raw CSV is not bundled in the public repo.")
