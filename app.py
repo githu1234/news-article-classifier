@@ -77,8 +77,8 @@ with st.sidebar:
 
 st.markdown("""
 <div class="hero">
-<h1>News Article Topic Classifier</h1>
-<p>Paste an article to see which topic it is most likely to discuss.</p>
+<h1>ArticleLens</h1>
+<p>Classify a news article into its most likely topic.</p>
 </div>
 """, unsafe_allow_html=True)
 
