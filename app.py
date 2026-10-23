@@ -1,4 +1,4 @@
-"""Streamlit app for classifying news articles with Naive Bayes."""
+"""Streamlit app for classifying news topics with Naive Bayes."""
 from __future__ import annotations
 import pickle
 from pathlib import Path
@@ -9,7 +9,7 @@ from train_model import DATA_PATH, MODEL_PATH, train_and_save_model
 APP_DIR = Path(__file__).resolve().parent
 PUBLIC_MODEL_PATH = APP_DIR / "news_classifier.pkl"
 
-st.set_page_config(page_title="NewsDesk | Article Classifier", page_icon="🗞️",
+st.set_page_config(page_title="ArticleLens | News Topic Classifier", page_icon="📰",
                    layout="wide", initial_sidebar_state="expanded")
 
 @st.cache_resource(show_spinner=False)
@@ -54,8 +54,8 @@ div[data-testid="stMetric"] { background: white; border: 1px solid #e5ebf2;
 """, unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown("## 🗞️ NewsDesk")
-    st.caption("BBC topic classifier")
+    st.markdown("## 📰 ArticleLens")
+    st.caption("News topic classifier")
     st.divider()
     with st.spinner("Loading the classifier…"):
         try:
@@ -67,38 +67,37 @@ with st.sidebar:
     st.metric("Training articles", f"{artifact.get('training_rows', 0):,}")
     accuracy = artifact.get("validation_accuracy")
     st.metric("Holdout accuracy", f"{accuracy:.1%}" if accuracy is not None else "—")
-    st.caption("Multinomial Naive Bayes · TF-IDF features")
+    st.caption("Naive Bayes · TF-IDF word-presence features")
     if artifact.get("category_counts"):
-        st.markdown("### Articles by category")
+        st.markdown("### Topics in the training set")
         for label, count in artifact["category_counts"].items():
             st.write(f"**{category_name(label)}** · {count:,}")
 
 st.markdown("""
 <div class="hero">
-<h1>News article classifier</h1>
-<p>Paste an article and see which topic the model thinks it belongs to.</p>
+<h1>News Article Topic Classifier</h1>
+<p>Paste an article to see which topic it is most likely to discuss.</p>
 </div>
 """, unsafe_allow_html=True)
 
 left, right = st.columns([1.2, 0.8], gap="large")
 with left:
-    st.subheader("Article to classify")
-    headline = st.text_input("Headline", placeholder="Add a headline (optional)")
+    st.subheader("Classify an article")
+    headline = st.text_input("Headline (optional)", placeholder="Add a headline")
     article = st.text_area("Article text", height=310,
                            placeholder="Paste the article text here…",
                            help="A few sentences usually give the model more context.")
     classify = st.button("Classify article", type="primary", use_container_width=True)
 with right:
-    st.subheader("How it works")
+    st.subheader("How classification works")
     st.markdown(
-        "The app converts words and short phrases into TF-IDF features, then uses a "
-        "**Multinomial Naive Bayes** model trained on the included BBC articles. "
-        "The fitted pipeline is saved locally with Python pickle."
+        "The app turns article text into TF-IDF features, then uses a **Naive Bayes** "
+        "classifier to estimate the topic. The model scores the words and short phrases "
+        "that appear in the article."
     )
     st.info(
-        "Confidence scores show how the model distributes its prediction across "
-        "categories. They are useful for comparison, but are not guaranteed to be "
-        "calibrated probabilities."
+        "Topic scores show how the model ranks the possible categories. They can help "
+        "compare topics, but they are not guaranteed to be calibrated probabilities."
     )
 
 if classify:
@@ -111,20 +110,23 @@ if classify:
         probabilities = model.predict_proba([content])[0]
         classes = model.named_steps["classifier"].classes_
         scores = pd.DataFrame({
-            "Category": [category_name(label) for label in classes],
-            "Confidence": probabilities,
-        }).sort_values("Confidence", ascending=False)
-        st.markdown("### Classification")
+            "Topic": [category_name(label) for label in classes],
+            "Score": probabilities,
+        }).sort_values("Score", ascending=False)
+        st.markdown("### Classification result")
         result_col, score_col = st.columns([1.4, 1])
         with result_col:
             st.markdown(
-                f'<div class="result-card"><div class="eyebrow">Predicted category</div>'
+                f'<div class="result-card"><div class="eyebrow">Predicted topic</div>'
                 f'<div class="category">{category_name(prediction)}</div>'
                 f'<div class="subtle">Highest model score</div></div>',
                 unsafe_allow_html=True)
         with score_col:
-            st.metric("Top score", f"{float(scores.iloc[0]['Confidence']):.1%}")
-        st.markdown("#### Scores by category")
-        st.bar_chart(scores.set_index("Category")[["Confidence"]])
+            st.metric("Top topic score", f"{float(scores.iloc[0]['Score']):.1%}")
+        st.markdown("#### Scores by topic")
+        st.bar_chart(scores.set_index("Topic")[["Score"]])
 
-st.caption("Training corpus: BBC text classification data; raw CSV is not bundled in the public repo.")
+st.caption(
+    f"Training set: {artifact.get('training_rows', 0):,} labeled news articles. "
+    "The source CSV is not included in the public repository."
+)

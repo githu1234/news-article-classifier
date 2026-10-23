@@ -1,4 +1,4 @@
-"""Train and persist the BBC news category classifier."""
+"""Train and persist a Naive Bayes news topic classifier."""
 from __future__ import annotations
 import pickle
 from datetime import datetime, timezone
@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import BernoulliNB
 from sklearn.pipeline import Pipeline
 
 APP_DIR = Path(__file__).resolve().parent
@@ -18,11 +18,11 @@ def make_pipeline() -> Pipeline:
     return Pipeline([
         ("tfidf", TfidfVectorizer(stop_words="english", ngram_range=(1, 2),
                                   min_df=2, max_df=0.95, sublinear_tf=True)),
-        ("classifier", MultinomialNB(alpha=0.2)),
+        ("classifier", BernoulliNB(alpha=0.2, binarize=0.0)),
     ])
 
 def train_and_save_model() -> dict:
-    """Train on the bundled CSV and pickle the fitted pipeline and metadata."""
+    """Train on the local CSV and pickle the fitted pipeline and metadata."""
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Training data was not found: {DATA_PATH}")
     frame = pd.read_csv(DATA_PATH)
