@@ -11,7 +11,7 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.pipeline import Pipeline
 
 APP_DIR = Path(__file__).resolve().parent
-DATA_PATH = APP_DIR / "data" / "bbc_text_cls.csv"
+DATA_PATH = APP_DIR / "data" / "news_articles.csv"
 MODEL_PATH = APP_DIR / "data" / "news_classifier.pkl"
 
 def make_pipeline() -> Pipeline:
@@ -63,3 +63,4 @@ if __name__ == "__main__":
     print(f"Saved model to: {MODEL_PATH}")
     print(f"Validation accuracy: {result['validation_accuracy']:.1%}")
     print(f"Training articles: {result['training_rows']}")
+

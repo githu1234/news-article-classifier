@@ -2,6 +2,8 @@
 
 A Streamlit app that predicts the topic of a news article using a Naive Bayes classifier and TF-IDF word features. The trained model and its metadata are stored in a Python pickle.
 
+Live app: [ArticleLens](https://articlelens.streamlit.app/).
+
 ## Run locally
 
 Install dependencies:
@@ -16,7 +18,7 @@ Start the app:
 streamlit run app.py
 ```
 
-The app loads `data/news_classifier.pkl` locally. If no model is available, it trains from `data/bbc_text_cls.csv`, which must contain `text` and `labels` columns.
+The app loads `data/news_classifier.pkl` locally. If no model is available, it trains from `data/news_articles.csv`, which must contain `text` and `labels` columns.
 
 ## Public deployment
 
@@ -30,4 +32,5 @@ Deploy through Streamlit Community Cloud by selecting this repository, the `main
 - Accuracy is measured on a stratified 20% holdout split; the saved model is then fitted on the full dataset.
 - Model scores may not be calibrated probabilities.
 - The app loads only the included pickle or a model created locally. Pickle files can execute code; do not use one from an untrusted source.
-- To retrain, put the source CSV at `data/bbc_text_cls.csv` and run `python train_model.py`.
+- To retrain, put the source CSV at `data/news_articles.csv` and run `python train_model.py`.
+

@@ -8,12 +8,13 @@ from train_model import DATA_PATH, MODEL_PATH, train_and_save_model
 
 APP_DIR = Path(__file__).resolve().parent
 PUBLIC_MODEL_PATH = APP_DIR / "news_classifier.pkl"
+MODEL_REVISION = "bernoulli-nb-v1"
 
 st.set_page_config(page_title="ArticleLens | News Topic Classifier", page_icon="📰",
                    layout="wide", initial_sidebar_state="expanded")
 
 @st.cache_resource(show_spinner=False)
-def load_artifact() -> dict:
+def load_artifact(model_revision: str) -> dict:
     """Load a saved pickle or train once if it is missing or stale."""
     model_path = next((path for path in (MODEL_PATH, PUBLIC_MODEL_PATH) if path.exists()), None)
     needs_training = model_path is None
@@ -50,6 +51,7 @@ st.markdown("""
 .subtle { color: #61758a; }
 div[data-testid="stMetric"] { background: white; border: 1px solid #e5ebf2;
  border-radius: 14px; padding: .8rem 1rem; }
+div[data-testid="stMetric"] * { color: #172b45 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -59,7 +61,7 @@ with st.sidebar:
     st.divider()
     with st.spinner("Loading the classifier…"):
         try:
-            artifact = load_artifact()
+            artifact = load_artifact(MODEL_REVISION)
         except Exception as error:
             st.error(f"Could not prepare the model: {error}")
             st.stop()
@@ -89,7 +91,7 @@ with left:
                            help="A few sentences usually give the model more context.")
     classify = st.button("Classify article", type="primary", use_container_width=True)
 with right:
-    st.subheader("How classification works")
+    st.subheader("How topic classification works")
     st.markdown(
         "The app turns article text into TF-IDF features, then uses a **Naive Bayes** "
         "classifier to estimate the topic. The model scores the words and short phrases "
@@ -123,10 +125,14 @@ if classify:
                 unsafe_allow_html=True)
         with score_col:
             st.metric("Top topic score", f"{float(scores.iloc[0]['Score']):.1%}")
-        st.markdown("#### Scores by topic")
+        st.markdown("#### Topic score comparison")
         st.bar_chart(scores.set_index("Topic")[["Score"]])
 
 st.caption(
     f"Training set: {artifact.get('training_rows', 0):,} labeled news articles. "
     "The source CSV is not included in the public repository."
 )
+
+
+
+
